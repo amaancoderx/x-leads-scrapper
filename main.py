@@ -68,12 +68,12 @@ class ProvideInputRequest(BaseModel):
 # ─────────────────────────────────────────────────────────────────────────────
 # CrewAI Task Execution
 # ─────────────────────────────────────────────────────────────────────────────
-async def execute_crew_task(input_data: str) -> str:
-    """ Execute a CrewAI task with Research and Writing Agents """
-    logger.info(f"Starting CrewAI task with input: {input_data}")
+async def execute_crew_task(input_data: dict) -> str:
+    """ Execute Apify search for Cardano leads """
+    logger.info(f"Starting Cardano lead search with input: {input_data}")
     crew = ResearchCrew(logger=logger)
-    result = crew.crew.kickoff(inputs={"text": input_data})
-    logger.info("CrewAI task completed successfully")
+    result = crew.kickoff(inputs=input_data)
+    logger.info("Cardano lead search completed successfully")
     return result
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -232,14 +232,28 @@ async def get_status(job_id: str):
 
 
     result_data = job.get("result")
-    result = result_data.raw if result_data and hasattr(result_data, "raw") else None
 
-    return {
+    # Extract result in proper format for MIP-003 compliance
+    result = None
+    if result_data:
+        if hasattr(result_data, 'pydantic') and result_data.pydantic:
+            result = result_data.pydantic.model_dump()
+        elif hasattr(result_data, 'json_dict'):
+            result = result_data.json_dict
+        else:
+            result = str(result_data)
+
+    # MIP-003 compliant response
+    response = {
         "job_id": job_id,
-        "status": job["status"],
-        "payment_status": job["payment_status"],
-        "result": result
+        "status": job["status"]
     }
+
+    # Add optional fields only if they exist
+    if result is not None:
+        response["result"] = result
+
+    return response
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 4) Check Server Availability (MIP-003: /availability)
@@ -253,7 +267,46 @@ async def check_availability():
     #return {"status": "available","agentIdentifier": os.getenv("AGENT_IDENTIFIER"), "message": "The server is running smoothly."}
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 5) Retrieve Input Schema (MIP-003: /input_schema)
+# 5) Provide Input (MIP-003: /provide_input)
+# ─────────────────────────────────────────────────────────────────────────────
+class ProvideInputRequestBody(BaseModel):
+    job_id: str
+    input_data: dict
+
+@app.post("/provide_input")
+async def provide_input(data: ProvideInputRequestBody):
+    """
+    Allows users to send additional input if a job is in the "awaiting_input" status.
+    Fulfills MIP-003 /provide_input endpoint.
+    """
+    job_id = data.job_id
+    logger.info(f"Received additional input for job {job_id}")
+
+    if job_id not in jobs:
+        logger.warning(f"Job {job_id} not found")
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    job = jobs[job_id]
+
+    if job["status"] != "awaiting_input":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Job is not awaiting input. Current status: {job['status']}"
+        )
+
+    # Store the additional input
+    if "additional_inputs" not in job:
+        job["additional_inputs"] = []
+    job["additional_inputs"].append(data.input_data)
+
+    # Update status to running
+    job["status"] = "running"
+    logger.info(f"Job {job_id} updated with additional input, now running")
+
+    return {"status": "success"}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6) Retrieve Input Schema (MIP-003: /input_schema)
 # ─────────────────────────────────────────────────────────────────────────────
 @app.get("/input_schema")
 async def input_schema():
@@ -266,17 +319,17 @@ async def input_schema():
             {
                 "id": "text",
                 "type": "string",
-                "name": "Task Description",
+                "name": "Search Topic",
                 "data": {
-                    "description": "The text input for the AI task",
-                    "placeholder": "Enter your task description here"
+                    "description": "The topic to search for Cardano leads (e.g., 'developers', 'NFT artists', 'DeFi projects')",
+                    "placeholder": "developers"
                 }
             }
         ]
     }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 6) Health Check
+# 7) Health Check
 # ─────────────────────────────────────────────────────────────────────────────
 @app.get("/health")
 async def health():
