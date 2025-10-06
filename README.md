@@ -8,9 +8,9 @@
 
 ## 🎥 Demo Video
 
-[![Watch Demo](https://img.youtube.com/vi/kbF5d00DKHQ/maxresdefault.jpg)](https://youtu.be/kbF5d00DKHQ)
+https://github.com/amaancoderx/x-leads-scrapper/assets/demo.mp4
 
-**[► Watch the full demo on YouTube](https://youtu.be/kbF5d00DKHQ)**
+**[► Also available on YouTube](https://youtu.be/kbF5d00DKHQ)**
 
 ## 🎯 What It Does
 
