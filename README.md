@@ -8,7 +8,7 @@
 
 ## 🎥 Demo Video
 
-https://github.com/amaancoderx/x-leads-scrapper/assets/demo.mp4
+https://drive.google.com/file/d/17_TlLy3VjW8Rw4TRBQLd6xI1Or1HFze8/view?usp=sharing
 
 > Watch the full demo of the Cardano Lead Generator Agent in action
 
