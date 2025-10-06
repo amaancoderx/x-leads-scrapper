@@ -256,13 +256,13 @@ curl "http://localhost:8000/status?job_id=<job_id_from_step_1>"
 ### 📸 Screenshots
 
 **1. Making Payment via Masumi Payment Service**
-![Payment Request](https://i.imgur.com/payment-screenshot.png)
+![Payment Request](screenshots/payment-request.png)
 
 **2. Masumi Dashboard - Agent Overview**
-![Masumi Dashboard](https://i.imgur.com/dashboard-screenshot.png)
+![Masumi Dashboard](screenshots/masumi-dashboard.png)
 
 **3. Agent Results - Cardano Leads JSON Output**
-![Results Output](https://i.imgur.com/results-screenshot.png)
+![Results Output](screenshots/results-output.png)
 
 ## 🏗️ Architecture
 
